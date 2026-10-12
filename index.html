@@ -61,7 +61,7 @@
 
         /* Modales */
         .modal-overlay { position: fixed; inset: 0; background-color: rgba(0, 0, 0, 0.7); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 50; padding: 16px; }
-        .modal-overlay.hidden { display: none; }
+        .modal-overlay.hidden { display: none !important; }
         .modal-content { background-color: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; width: 100%; max-width: 420px; padding: 20px; display: flex; flex-direction: column; gap: 16px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.5); }
         .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 10px; }
         .modal-close { background: none; color: var(--text-muted); font-size: 18px; cursor: pointer; }
@@ -255,31 +255,41 @@
         </div>
     </div>
 
-    <!-- SCRIPT NATIVO SIN DEPENDENCIAS -->
+    <!-- SCRIPT BLINDADO CONTRA ERRORES DE DATOS -->
     <script>
-        let datos = JSON.parse(localStorage.getItem('finanzas_pro_v3')) || {
-            cuentas: [
-                { id: 'c1', nombre: 'Efectivo', saldo: 30000 },
-                { id: 'c2', nombre: 'Mercado Pago', saldo: 120000 },
-                { id: 'c3', nombre: 'Banco Galicia', saldo: 250000 }
-            ],
-            sobres: [
-                { id: 's1', nombre: 'Alimentos', asignado: 150000, gastado: 45000 },
-                { id: 's2', nombre: 'Transporte', asignado: 40000, gastado: 15000 },
-                { id: 's3', nombre: 'Servicios', asignado: 60000, gastado: 58000 }
-            ],
-            movimientos: []
-        };
+        let datos;
+        try {
+            datos = JSON.parse(localStorage.getItem('finanzas_pro_v4'));
+            if (!datos || !Array.isArray(datos.cuentas) || !Array.isArray(datos.sobres) || !Array.isArray(datos.movimientos)) {
+                throw new Error("Estructura inválida");
+            }
+        } catch (e) {
+            datos = {
+                cuentas: [
+                    { id: 'c1', nombre: 'Efectivo', saldo: 30000 },
+                    { id: 'c2', nombre: 'Mercado Pago', saldo: 120000 },
+                    { id: 'c3', nombre: 'Banco Galicia', saldo: 250000 }
+                ],
+                sobres: [
+                    { id: 's1', nombre: 'Alimentos', asignado: 150000, gastado: 45000 },
+                    { id: 's2', nombre: 'Transporte', asignado: 40000, gastado: 15000 },
+                    { id: 's3', nombre: 'Servicios', asignado: 60000, gastado: 58000 }
+                ],
+                movimientos: []
+            };
+            localStorage.setItem('finanzas_pro_v4', JSON.stringify(datos));
+        }
 
         let tipoOp = 'GASTO';
 
         document.addEventListener('DOMContentLoaded', () => {
-            document.getElementById('input-fecha').value = new Date().toISOString().split('T')[0];
+            const inputFecha = document.getElementById('input-fecha');
+            if(inputFecha) inputFecha.value = new Date().toISOString().split('T')[0];
             actualizarTodo();
         });
 
         function guardar() {
-            localStorage.setItem('finanzas_pro_v3', JSON.stringify(datos));
+            localStorage.setItem('finanzas_pro_v4', JSON.stringify(datos));
             actualizarTodo();
         }
 
@@ -323,6 +333,7 @@
 
         function renderizarCuentas() {
             const cont = document.getElementById('contenedor-cuentas');
+            if(!cont) return;
             cont.innerHTML = datos.cuentas.map(c => `
                 <div class="cuenta-card" onclick="verDetalleCuenta('${c.id}')">
                     <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">${c.nombre}</div>
@@ -333,6 +344,7 @@
 
         function renderizarSobres() {
             const cont = document.getElementById('contenedor-sobres');
+            if(!cont) return;
             cont.innerHTML = datos.sobres.map(s => {
                 const disponible = s.asignado - s.gastado;
                 const porcentaje = Math.min(Math.round((s.gastado / s.asignado) * 100) || 0, 100);
@@ -367,6 +379,7 @@
             if(filtroCuenta !== 'TODAS') lista = lista.filter(m => m.cuentaId === filtroCuenta || m.cuentaDestinoId === filtroCuenta);
 
             const tbody = document.getElementById('tabla-movimientos');
+            if(!tbody) return;
             if(lista.length === 0) {
                 tbody.innerHTML = `<tr><td colspan="7" class="text-center" style="padding: 20px; color: var(--text-muted);">No hay movimientos registrados</td></tr>`;
                 return;
@@ -401,10 +414,10 @@
             const sSobre = document.getElementById('select-sobre');
 
             const options = datos.cuentas.map(c => `<option value="${c.id}">${c.nombre} ($${c.saldo.toLocaleString('es-AR')})</option>`).join('');
-            sCuenta.innerHTML = options;
-            sDestino.innerHTML = options;
-            sSobre.innerHTML = datos.sobres.map(s => `<option value="${s.id}">${s.nombre}</option>`).join('');
-            fCuenta.innerHTML = `<option value="TODAS">Todas las Cuentas</option>` + datos.cuentas.map(c => `<option value="${c.id}">${c.nombre}</option>`).join('');
+            if(sCuenta) sCuenta.innerHTML = options;
+            if(sDestino) sDestino.innerHTML = options;
+            if(sSobre) sSobre.innerHTML = datos.sobres.map(s => `<option value="${s.id}">${s.nombre}</option>`).join('');
+            if(fCuenta) fCuenta.innerHTML = `<option value="TODAS">Todas las Cuentas</option>` + datos.cuentas.map(c => `<option value="${c.id}">${c.nombre}</option>`).join('');
         }
 
         function setTipo(tipo) {
@@ -415,27 +428,34 @@
             const gDestino = document.getElementById('group-destino');
             const gSobre = document.getElementById('group-sobre');
 
-            bGasto.className = 'type-btn';
-            bIng.className = 'type-btn';
-            bTrans.className = 'type-btn';
+            if(bGasto) bGasto.className = 'type-btn';
+            if(bIng) bIng.className = 'type-btn';
+            if(bTrans) bTrans.className = 'type-btn';
 
             if(tipo === 'GASTO') {
-                bGasto.classList.add('active-gasto');
-                gDestino.classList.add('hidden');
-                gSobre.classList.remove('hidden');
+                if(bGasto) bGasto.classList.add('active-gasto');
+                if(gDestino) gDestino.classList.add('hidden');
+                if(gSobre) gSobre.classList.remove('hidden');
             } else if(tipo === 'INGRESO') {
-                bIng.classList.add('active-ingreso');
-                gDestino.classList.add('hidden');
-                gSobre.classList.add('hidden');
+                if(bIng) bIng.classList.add('active-ingreso');
+                if(gDestino) gDestino.classList.add('hidden');
+                if(gSobre) gSobre.classList.add('hidden');
             } else {
-                bTrans.classList.add('active-trans');
-                gDestino.classList.remove('hidden');
-                gSobre.classList.add('hidden');
+                if(bTrans) bTrans.classList.add('active-trans');
+                if(gDestino) gDestino.classList.remove('hidden');
+                if(gSobre) gSobre.classList.add('hidden');
             }
         }
 
-        function abrirModalMovimiento() { document.getElementById('modal-movimiento').classList.remove('hidden'); }
-        function cerrarModal(id) { document.getElementById(id).classList.add('hidden'); }
+        function abrirModalMovimiento() { 
+            const modal = document.getElementById('modal-movimiento');
+            if(modal) modal.classList.remove('hidden'); 
+        }
+
+        function cerrarModal(id) { 
+            const modal = document.getElementById(id);
+            if(modal) modal.classList.add('hidden'); 
+        }
 
         function guardarMovimiento(e) {
             e.preventDefault();
@@ -478,7 +498,8 @@
 
             guardar();
             cerrarModal('modal-movimiento');
-            document.getElementById('form-movimiento').reset();
+            const form = document.getElementById('form-movimiento');
+            if(form) form.reset();
             setTipo('GASTO');
         }
 
@@ -547,6 +568,7 @@
 
         function renderizarInformes() {
             const cont = document.getElementById('resumen-informes');
+            if(!cont) return;
             const totalGastos = datos.movimientos.filter(m => m.tipo === 'GASTO').reduce((a, b) => a + b.monto, 0) || 1;
             
             cont.innerHTML = datos.sobres.map(s => {
