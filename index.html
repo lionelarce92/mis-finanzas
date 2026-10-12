@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Finanzas Pro - Sin Dependencias</title>
+    <title>Finanzas Pro</title>
     <style>
         :root {
             --bg-main: #0f172a;
@@ -59,7 +59,6 @@
         td { padding: 10px; border-bottom: 1px solid var(--border); color: #cbd5e1; }
         tr:hover { background-color: rgba(30, 41, 59, 0.5); }
 
-        /* Modales */
         .modal-overlay { position: fixed; inset: 0; background-color: rgba(0, 0, 0, 0.7); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 50; padding: 16px; }
         .modal-overlay.hidden { display: none !important; }
         .modal-content { background-color: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; width: 100%; max-width: 420px; padding: 20px; display: flex; flex-direction: column; gap: 16px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.5); }
@@ -86,11 +85,11 @@
         .badge-GASTO { background: rgba(239,68,68,0.1); color: var(--rose); border-color: rgba(239,68,68,0.2); }
         .badge-INGRESO { background: rgba(16,185,129,0.1); color: var(--emerald); border-color: rgba(16,185,129,0.2); }
         .badge-TRANSFERENCIA { background: rgba(14,165,233,0.1); color: var(--sky); border-color: rgba(14,165,233,0.2); }
+        .hidden { display: none !important; }
     </style>
 </head>
 <body>
 
-    <!-- Header -->
     <header>
         <div class="header-content">
             <div class="logo-area">
@@ -101,9 +100,9 @@
                 </div>
             </div>
             <div class="nav-buttons">
-                <button onclick="cambiarVista('dashboard')" id="tab-dash" class="btn-tab active">Dashboard</button>
-                <button onclick="cambiarVista('informes')" id="tab-info" class="btn-tab">Informes</button>
-                <button onclick="abrirModalMovimiento()" class="btn-primary">+ Nuevo</button>
+                <button id="btn-tab-dash" class="btn-tab active">Dashboard</button>
+                <button id="btn-tab-info" class="btn-tab">Informes</button>
+                <button id="btn-nuevo-mov" class="btn-primary">+ Nuevo</button>
             </div>
         </div>
     </header>
@@ -111,7 +110,6 @@
     <main>
         <!-- VISTA DASHBOARD -->
         <div id="vista-dashboard" style="display: flex; flex-direction: column; gap: 20px;">
-            <!-- Resumen Global -->
             <section class="grid-3">
                 <div class="card">
                     <div class="card-title">Patrimonio Total <span>🏛️</span></div>
@@ -130,36 +128,33 @@
                 </div>
             </section>
 
-            <!-- Cuentas Reales -->
             <section>
                 <div class="section-header">
-                    <h2 class="section-title">💳 Cuentas Reales <span style="font-size: 11px; color: var(--text-muted); font-weight: normal;">(Haz clic para ver historial)</span></h2>
-                    <button onclick="agregarCuenta()" class="btn-secondary">+ Cuenta</button>
+                    <h2 class="section-title">💳 Cuentas Reales</h2>
+                    <button id="btn-add-cuenta" class="btn-secondary">+ Cuenta</button>
                 </div>
                 <div id="contenedor-cuentas" class="cuentas-grid"></div>
             </section>
 
-            <!-- Sobres de Presupuesto -->
             <section>
                 <div class="section-header">
-                    <h2 class="section-title">📂 Sobres de Presupuesto <span style="font-size: 11px; color: var(--text-muted); font-weight: normal;">(Haz clic para detalle)</span></h2>
-                    <button onclick="agregarSobre()" class="btn-secondary">+ Sobre</button>
+                    <h2 class="section-title">📂 Sobres de Presupuesto</h2>
+                    <button id="btn-add-sobre" class="btn-secondary">+ Sobre</button>
                 </div>
                 <div id="contenedor-sobres" class="sobres-grid"></div>
             </section>
 
-            <!-- Historial de Movimientos -->
             <section class="card" style="padding: 16px;">
                 <div class="section-header" style="flex-wrap: wrap; gap: 10px;">
                     <h2 class="section-title">📋 Historial de Movimientos</h2>
                     <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-                        <select id="filtro-tipo" onchange="renderizarMovimientos()" style="width: auto; padding: 6px; font-size: 12px;">
+                        <select id="filtro-tipo" style="width: auto; padding: 6px; font-size: 12px;">
                             <option value="TODOS">Todos los Tipos</option>
                             <option value="GASTO">Gastos</option>
                             <option value="INGRESO">Ingresos</option>
                             <option value="TRANSFERENCIA">Transferencias</option>
                         </select>
-                        <select id="filtro-cuenta" onchange="renderizarMovimientos()" style="width: auto; padding: 6px; font-size: 12px;">
+                        <select id="filtro-cuenta" style="width: auto; padding: 6px; font-size: 12px;">
                             <option value="TODAS">Todas las Cuentas</option>
                         </select>
                     </div>
@@ -184,18 +179,16 @@
         </div>
 
         <!-- VISTA INFORMES -->
-        <div id="vista-informes" style="display: none; flex-direction: column; gap: 20px;">
+        <div id="vista-informes" class="hidden" style="flex-direction: column; gap: 20px;">
             <div class="card" style="padding: 20px;">
                 <div class="section-header" style="border-bottom: 1px solid var(--border); padding-bottom: 15px;">
                     <div>
                         <h2>📊 Informes y Estadísticas</h2>
                         <p style="font-size: 12px; color: var(--text-muted);">Resumen de gastos por sobre</p>
                     </div>
-                    <button onclick="exportarCSV()" class="btn-secondary">📥 Exportar CSV</button>
+                    <button id="btn-export-csv" class="btn-secondary">📥 Exportar CSV</button>
                 </div>
-                <div id="resumen-informes" style="margin-top: 20px; display: flex; flex-direction: column; gap: 12px;">
-                    <!-- Barras generadas por JS -->
-                </div>
+                <div id="resumen-informes" style="margin-top: 20px; display: flex; flex-direction: column; gap: 12px;"></div>
             </div>
         </div>
     </main>
@@ -205,13 +198,13 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h3>Registrar Movimiento</h3>
-                <button onclick="cerrarModal('modal-movimiento')" class="modal-close">✕</button>
+                <button id="btn-close-modal" class="modal-close">✕</button>
             </div>
-            <form id="form-movimiento" onsubmit="guardarMovimiento(event)" style="display: flex; flex-direction: column; gap: 12px;">
+            <form id="form-movimiento" style="display: flex; flex-direction: column; gap: 12px;">
                 <div class="type-selector">
-                    <button type="button" id="btn-gasto" onclick="setTipo('GASTO')" class="type-btn active-gasto">Gasto</button>
-                    <button type="button" id="btn-ingreso" onclick="setTipo('INGRESO')" class="type-btn">Ingreso</button>
-                    <button type="button" id="btn-trans" onclick="setTipo('TRANSFERENCIA')" class="type-btn">Transferir</button>
+                    <button type="button" id="btn-gasto" class="type-btn active-gasto">Gasto</button>
+                    <button type="button" id="btn-ingreso" class="type-btn">Ingreso</button>
+                    <button type="button" id="btn-trans" class="type-btn">Transferir</button>
                 </div>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
                     <div class="form-group">
@@ -244,22 +237,21 @@
         </div>
     </div>
 
-    <!-- MODAL DETALLE (Cuenta o Sobre) -->
+    <!-- MODAL DETALLE -->
     <div id="modal-detalle" class="modal-overlay hidden">
         <div class="modal-content">
             <div class="modal-header">
                 <h3 id="detalle-titulo">Detalle</h3>
-                <button onclick="cerrarModal('modal-detalle')" class="modal-close">✕</button>
+                <button id="btn-close-detalle" class="modal-close">✕</button>
             </div>
             <div id="detalle-contenido" style="display: flex; flex-direction: column; gap: 12px; max-height: 350px; overflow-y: auto;"></div>
         </div>
     </div>
 
-    <!-- SCRIPT BLINDADO CONTRA ERRORES DE DATOS -->
     <script>
         let datos;
         try {
-            datos = JSON.parse(localStorage.getItem('finanzas_pro_v4'));
+            datos = JSON.parse(localStorage.getItem('finanzas_pro_v6'));
             if (!datos || !Array.isArray(datos.cuentas) || !Array.isArray(datos.sobres) || !Array.isArray(datos.movimientos)) {
                 throw new Error("Estructura inválida");
             }
@@ -277,7 +269,7 @@
                 ],
                 movimientos: []
             };
-            localStorage.setItem('finanzas_pro_v4', JSON.stringify(datos));
+            localStorage.setItem('finanzas_pro_v6', JSON.stringify(datos));
         }
 
         let tipoOp = 'GASTO';
@@ -285,11 +277,29 @@
         document.addEventListener('DOMContentLoaded', () => {
             const inputFecha = document.getElementById('input-fecha');
             if(inputFecha) inputFecha.value = new Date().toISOString().split('T')[0];
+
+            document.getElementById('btn-tab-dash').addEventListener('click', () => cambiarVista('dashboard'));
+            document.getElementById('btn-tab-info').addEventListener('click', () => cambiarVista('informes'));
+            document.getElementById('btn-nuevo-mov').addEventListener('click', abrirModalMovimiento);
+            document.getElementById('btn-add-cuenta').addEventListener('click', agregarCuenta);
+            document.getElementById('btn-add-sobre').addEventListener('click', agregarSobre);
+            document.getElementById('btn-close-modal').addEventListener('click', () => cerrarModal('modal-movimiento'));
+            document.getElementById('btn-close-detalle').addEventListener('click', () => cerrarModal('modal-detalle'));
+            
+            document.getElementById('btn-gasto').addEventListener('click', () => setTipo('GASTO'));
+            document.getElementById('btn-ingreso').addEventListener('click', () => setTipo('INGRESO'));
+            document.getElementById('btn-trans').addEventListener('click', () => setTipo('TRANSFERENCIA'));
+
+            document.getElementById('form-movimiento').addEventListener('submit', guardarMovimiento);
+            document.getElementById('filtro-tipo').addEventListener('change', renderizarMovimientos);
+            document.getElementById('filtro-cuenta').addEventListener('change', renderizarMovimientos);
+            document.getElementById('btn-export-csv').addEventListener('click', exportarCSV);
+
             actualizarTodo();
         });
 
         function guardar() {
-            localStorage.setItem('finanzas_pro_v4', JSON.stringify(datos));
+            localStorage.setItem('finanzas_pro_v6', JSON.stringify(datos));
             actualizarTodo();
         }
 
@@ -305,17 +315,17 @@
         function cambiarVista(vista) {
             const dash = document.getElementById('vista-dashboard');
             const info = document.getElementById('vista-informes');
-            const bDash = document.getElementById('tab-dash');
-            const bInfo = document.getElementById('tab-info');
+            const bDash = document.getElementById('btn-tab-dash');
+            const bInfo = document.getElementById('btn-tab-info');
 
             if(vista === 'dashboard') {
-                dash.style.display = 'flex';
-                info.style.display = 'none';
+                dash.classList.remove('hidden');
+                info.classList.add('hidden');
                 bDash.classList.add('active');
                 bInfo.classList.remove('active');
             } else {
-                dash.style.display = 'none';
-                info.style.display = 'flex';
+                dash.classList.add('hidden');
+                info.classList.remove('hidden');
                 bInfo.classList.add('active');
                 bDash.classList.remove('active');
             }
@@ -335,11 +345,15 @@
             const cont = document.getElementById('contenedor-cuentas');
             if(!cont) return;
             cont.innerHTML = datos.cuentas.map(c => `
-                <div class="cuenta-card" onclick="verDetalleCuenta('${c.id}')">
+                <div class="cuenta-card" data-id="${c.id}">
                     <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">${c.nombre}</div>
                     <div style="font-size: 18px; font-weight: bold;">$${c.saldo.toLocaleString('es-AR', {minimumFractionDigits: 2})}</div>
                 </div>
             `).join('');
+
+            cont.querySelectorAll('.cuenta-card').forEach(card => {
+                card.addEventListener('click', () => verDetalleCuenta(card.dataset.id));
+            });
         }
 
         function renderizarSobres() {
@@ -353,7 +367,7 @@
                 if(porcentaje >= 100) color = 'var(--rose)';
 
                 return `
-                    <div class="sobre-card" onclick="verDetalleSobre('${s.id}')">
+                    <div class="sobre-card" data-id="${s.id}">
                         <div style="display: flex; justify-content: space-between; align-items: center;">
                             <span style="font-weight: bold; font-size: 14px;">${s.nombre}</span>
                             <span style="font-size: 11px; color: var(--text-muted);">Restante: <b style="color: ${disponible < 0 ? 'var(--rose)' : 'var(--emerald)'}">$${disponible.toLocaleString('es-AR')}</b></span>
@@ -368,6 +382,10 @@
                     </div>
                 `;
             }).join('');
+
+            cont.querySelectorAll('.sobre-card').forEach(card => {
+                card.addEventListener('click', () => verDetalleSobre(card.dataset.id));
+            });
         }
 
         function renderizarMovimientos() {
@@ -400,11 +418,15 @@
                             ${m.tipo === 'GASTO' ? '-' : (m.tipo === 'INGRESO' ? '+' : '')}$${m.monto.toLocaleString('es-AR', {minimumFractionDigits: 2})}
                         </td>
                         <td class="text-center">
-                            <button onclick="eliminarMovimiento('${m.id}')" style="background: none; color: var(--text-muted); cursor: pointer;" title="Eliminar">🗑️</button>
+                            <button class="btn-eliminar" data-id="${m.id}" style="background: none; color: var(--text-muted); cursor: pointer;" title="Eliminar">🗑️</button>
                         </td>
                     </tr>
                 `;
             }).join('');
+
+            tbody.querySelectorAll('.btn-eliminar').forEach(btn => {
+                btn.addEventListener('click', () => eliminarMovimiento(btn.dataset.id));
+            });
         }
 
         function poblarSelects() {
@@ -428,33 +450,31 @@
             const gDestino = document.getElementById('group-destino');
             const gSobre = document.getElementById('group-sobre');
 
-            if(bGasto) bGasto.className = 'type-btn';
-            if(bIng) bIng.className = 'type-btn';
-            if(bTrans) bTrans.className = 'type-btn';
+            bGasto.className = 'type-btn';
+            bIng.className = 'type-btn';
+            bTrans.className = 'type-btn';
 
             if(tipo === 'GASTO') {
-                if(bGasto) bGasto.classList.add('active-gasto');
-                if(gDestino) gDestino.classList.add('hidden');
-                if(gSobre) gSobre.classList.remove('hidden');
+                bGasto.classList.add('active-gasto');
+                gDestino.classList.add('hidden');
+                gSobre.classList.remove('hidden');
             } else if(tipo === 'INGRESO') {
-                if(bIng) bIng.classList.add('active-ingreso');
-                if(gDestino) gDestino.classList.add('hidden');
-                if(gSobre) gSobre.classList.add('hidden');
+                bIng.classList.add('active-ingreso');
+                gDestino.classList.add('hidden');
+                gSobre.classList.add('hidden');
             } else {
-                if(bTrans) bTrans.classList.add('active-trans');
-                if(gDestino) gDestino.classList.remove('hidden');
-                if(gSobre) gSobre.classList.add('hidden');
+                bTrans.classList.add('active-trans');
+                gDestino.classList.remove('hidden');
+                gSobre.classList.add('hidden');
             }
         }
 
         function abrirModalMovimiento() { 
-            const modal = document.getElementById('modal-movimiento');
-            if(modal) modal.classList.remove('hidden'); 
+            document.getElementById('modal-movimiento').classList.remove('hidden'); 
         }
 
         function cerrarModal(id) { 
-            const modal = document.getElementById(id);
-            if(modal) modal.classList.add('hidden'); 
+            document.getElementById(id).classList.add('hidden'); 
         }
 
         function guardarMovimiento(e) {
@@ -498,8 +518,7 @@
 
             guardar();
             cerrarModal('modal-movimiento');
-            const form = document.getElementById('form-movimiento');
-            if(form) form.reset();
+            document.getElementById('form-movimiento').reset();
             setTipo('GASTO');
         }
 
