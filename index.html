@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión Financiera Pro - Sobres & Cuentas</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons CDN -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Chart.js CDN para Informes -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-100 font-sans min-h-screen pb-20 md:pb-6">
+
+    <!-- Top Navigation Header -->
+    <header class="bg-slate-800 border-b border-slate-700 sticky top-0 z-30 px-4 py-3 shadow-md">
+        <div class="max-w-6xl mx-auto flex items-center justify-between">
+            <div class="flex items-center space-x-2">
+                <div class="bg-emerald-500 p-2 rounded-lg text-slate-900 font-bold">
+                    <i data-lucide="wallet"></i>
+                </div>
+                <div>
+                    <h1 class="font-bold text-lg leading-tight">Finanzas Pro</h1>
+                    <p class="text-xs text-slate-400">Control Avanzado de Cuentas & Sobres</p>
+                </div>
+            </div>
+            <div class="flex items-center space-x-2">
+                <button onclick="cambiarVista('dashboard')" id="btn-tab-dashboard" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-700 text-emerald-400 flex items-center">
+                    <i data-lucide="layout-dashboard" class="w-4 h-4 mr-1"></i> Dashboard
+                </button>
+                <button onclick="cambiarVista('informes')" id="btn-tab-informes" class="px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-slate-200 flex items-center">
+                    <i data-lucide="pie-chart" class="w-4 h-4 mr-1"></i> Informes
+                </button>
+                <button onclick="abrirModalMovimiento()" class="bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold px-3 py-1.5 rounded-lg text-xs flex items-center transition shadow-lg shadow-emerald-500/20">
+                    <i data-lucide="plus-circle" class="w-4 h-4 mr-1"></i> Nuevo
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-6xl mx-auto px-4 py-6 space-y-6">
+
+        <!-- VISTA 1: DASHBOARD PRINCIPAL -->
+        <div id="vista-dashboard" class="space-y-6">
+
+            <!-- 1. RESUMEN GLOBAL -->
+            <section class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="bg-slate-800/80 border border-slate-700 p-4 rounded-xl shadow-sm">
+                    <div class="flex justify-between items-center text-slate-400 text-xs font-semibold uppercase tracking-wider mb-1">
+                        <span>Patrimonio Total</span>
+                        <i data-lucide="landmark" class="w-4 h-4"></i>
+                    </div>
+                    <p id="total-patrimonio" class="text-2xl font-bold text-emerald-400">$0.00</p>
+                    <span class="text-xs text-slate-400">Suma de Cuentas Reales</span>
+                </div>
+
+                <div class="bg-slate-800/80 border border-slate-700 p-4 rounded-xl shadow-sm">
+                    <div class="flex justify-between items-center text-slate-400 text-xs font-semibold uppercase tracking-wider mb-1">
+                        <span>Ingresos (Mes)</span>
+                        <i data-lucide="arrow-down-left" class="w-4 h-4 text-emerald-400"></i>
+                    </div>
+                    <p id="total-ingresos" class="text-2xl font-bold text-slate-100">$0.00</p>
+                    <span class="text-xs text-emerald-400 font-medium">Entradas del periodo</span>
+                </div>
+
+                <div class="bg-slate-800/80 border border-slate-700 p-4 rounded-xl shadow-sm">
+                    <div class="flex justify-between items-center text-slate-400 text-xs font-semibold uppercase tracking-wider mb-1">
+                        <span>Gastos (Mes)</span>
+                        <i data-lucide="arrow-up-right" class="w-4 h-4 text-rose-400"></i>
+                    </div>
+                    <p id="total-gastos" class="text-2xl font-bold text-slate-100">$0.00</p>
+                    <span class="text-xs text-rose-400 font-medium">Consumido en sobres</span>
+                </div>
+            </section>
+
+            <!-- 2. CUENTAS REALES -->
+            <section class="space-y-3">
+                <div class="flex justify-between items-center">
+                    <h2 class="text-base font-bold text-slate-200 flex items-center">
+                        <i data-lucide="credit-card" class="w-4 h-4 mr-2 text-emerald-400"></i> Cuentas Reales
+                        <span class="text-xs font-normal text-slate-400 ml-2">(Haz clic para ver detalle)</span>
+                    </h2>
+                    <button onclick="agregarCuenta()" class="text-xs text-emerald-400 hover:underline">+ Nueva Cuenta</button>
+                </div>
+                <div id="contenedor-cuentas" class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    <!-- Cuentas renderizadas dinámicamente -->
+                </div>
+            </section>
+
+            <!-- 3. SOBRES DE PRESUPUESTO -->
+            <section class="space-y-3">
+                <div class="flex justify-between items-center">
+                    <h2 class="text-base font-bold text-slate-200 flex items-center">
+                        <i data-lucide="folder-open" class="w-4 h-4 mr-2 text-emerald-400"></i> Sobres de Presupuesto
+                        <span class="text-xs font-normal text-slate-400 ml-2">(Haz clic para ver detalle)</span>
+                    </h2>
+                    <button onclick="agregarSobre()" class="text-xs text-emerald-400 hover:underline">+ Crear Sobre</button>
+                </div>
+                <div id="contenedor-sobres" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <!-- Sobres renderizados dinámicamente -->
+                </div>
+            </section>
+
+            <!-- 4. HISTORIAL DE MOVIMIENTOS -->
+            <section class="bg-slate-800/80 border border-slate-700 rounded-xl p-4 space-y-4">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
+                    <h2 class="text-base font-bold text-slate-200 flex items-center">
+                        <i data-lucide="list-filter" class="w-4 h-4 mr-2 text-emerald-400"></i> Últimos Movimientos
+                    </h2>
+                    
+                    <!-- Barra de Filtros -->
+                    <div class="flex flex-wrap gap-2 w-full md:w-auto">
+                        <select id="filtro-tipo" onchange="renderizarMovimientos()" class="bg-slate-900 border border-slate-700 rounded-lg text-xs p-2 text-slate-300">
+                            <option value="TODOS">Todos los Tipos</option>
+                            <option value="GASTO">Gastos</option>
+                            <option value="INGRESO">Ingresos</option>
+                            <option value="TRANSFERENCIA">Transferencias</option>
+                        </select>
+                        <select id="filtro-cuenta" onchange="renderizarMovimientos()" class="bg-slate-900 border border-slate-700 rounded-lg text-xs p-2 text-slate-300">
+                            <option value="TODAS">Todas las Cuentas</option>
+                        </select>
+                        <select id="filtro-sobre" onchange="renderizarMovimientos()" class="bg-slate-900 border border-slate-700 rounded-lg text-xs p-2 text-slate-300">
+                            <option value="TODOS">Todos los Sobres</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Tabla de Movimientos -->
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-sm text-slate-300">
+                        <thead class="text-xs uppercase bg-slate-900/60 text-slate-400 border-b border-slate-700">
+                            <tr>
+                                <th class="py-2.5 px-3">Fecha</th>
+                                <th class="py-2.5 px-3">Tipo</th>
+                                <th class="py-2.5 px-3">Cuenta / Origen</th>
+                                <th class="py-2.5 px-3">Sobre / Destino</th>
+                                <th class="py-2.5 px-3">Nota</th>
+                                <th class="py-2.5 px-3 text-right">Monto</th>
+                                <th class="py-2.5 px-3 text-center">Acción</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabla-movimientos" class="divide-y divide-slate-700/50">
+                            <!-- Filas dinámicas -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </div>
+
+        <!-- VISTA 2: INFORMES Y GRÁFICOS COMPLETO -->
+        <div id="vista-informes" class="space-y-6 hidden">
+            <div class="bg-slate-800/80 border border-slate-700 rounded-xl p-4 space-y-4">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 border-b border-slate-700 pb-4">
+                    <div>
+                        <h2 class="text-lg font-bold text-slate-100 flex items-center">
+                            <i data-lucide="bar-chart-3" class="w-5 h-5 mr-2 text-emerald-400"></i> Informes y Estadísticas
+                        </h2>
+                        <p class="text-xs text-slate-400">Analiza tus patrones de consumo y distribución de presupuesto</p>
+                    </div>
+                    
+                    <!-- Filtros de Fecha para Informes -->
+                    <div class="flex flex-wrap items-center gap-2">
+                        <input type="date" id="informe-fecha-desde" class="bg-slate-900 border border-slate-700 rounded-lg text-xs p-2 text-slate-300">
+                        <span class="text-xs text-slate-500">hasta</span>
+                        <input type="date" id="informe-fecha-hasta" class="bg-slate-900 border border-slate-700 rounded-lg text-xs p-2 text-slate-300">
+                        <button onclick="generarInformes()" class="bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold px-3 py-2 rounded-lg text-xs">Filtrar</button>
+                        <button onclick="exportarCSV()" class="bg-slate-700 hover:bg-slate-600 text-slate-200 font-semibold px-3 py-2 rounded-lg text-xs flex items-center">
+                            <i data-lucide="download" class="w-3.5 h-3.5 mr-1"></i> Exportar CSV
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Gráficos -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
+                    <div class="bg-slate-900/60 p-4 rounded-xl border border-slate-700/50 flex flex-col items-center">
+                        <h3 class="text-sm font-bold text-slate-300 mb-4 w-full text-left">Distribución de Gastos por Sobre</h3>
+                        <div class="w-full max-w-xs">
+                            <canvas id="chart-sobres"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-900/60 p-4 rounded-xl border border-slate-700/50 flex flex-col items-center">
+                        <h3 class="text-sm font-bold text-slate-300 mb-4 w-full text-left">Comparativa Ingresos vs Gastos</h3>
+                        <div class="w-full h-64">
+                            <canvas id="chart-comparativa"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- MODAL: REGISTRAR / EDITAR MOVIMIENTO -->
+    <div id="modal-movimiento" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-800 border border-slate-700 rounded-xl max-w-md w-full p-5 space-y-4 shadow-2xl">
+            <div class="flex justify-between items-center border-b border-slate-700 pb-3">
+                <h3 id="modal-movimiento-titulo" class="font-bold text-slate-100 text-lg">Registrar Movimiento</h3>
+                <button onclick="cerrarModalMovimiento()" class="text-slate-400 hover:text-slate-200">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+
+            <form id="form-movimiento" onsubmit="guardarMovimiento(event)" class="space-y-4">
+                <!-- Tipo de Operación -->
+                <div class="grid grid-cols-3 gap-2 p-1 bg-slate-900 rounded-lg">
+                    <button type="button" id="btn-tipo-gasto" onclick="seleccionarTipo('GASTO')" class="py-1.5 text-xs font-semibold rounded-md bg-rose-500/20 text-rose-300 border border-rose-500/30">Gasto</button>
+                    <button type="button" id="btn-tipo-ingreso" onclick="seleccionarTipo('INGRESO')" class="py-1.5 text-xs font-semibold rounded-md text-slate-400 hover:text-slate-200">Ingreso</button>
+                    <button type="button" id="btn-tipo-transferencia" onclick="seleccionarTipo('TRANSFERENCIA')" class="py-1.5 text-xs font-semibold rounded-md text-slate-400 hover:text-slate-200">Transferir</button>
+                </div>
+
+                <!-- Monto y Fecha -->
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs text-slate-400 mb-1">Monto ($)</label>
+                        <input type="number" step="0.01" id="input-monto" required class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-slate-100 font-semibold focus:outline-none focus:border-emerald-500" placeholder="0.00">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-slate-400 mb-1">Fecha</label>
+                        <input type="date" id="input-fecha" required class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-slate-100 text-xs focus:outline-none focus:border-emerald-500">
+                    </div>
+                </div>
+
+                <!-- Cuenta Origen -->
+                <div>
+                    <label id="lbl-cuenta-origen" class="block text-xs text-slate-400 mb-1">Cuenta de Origen</label>
+                    <select id="select-cuenta" required class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-slate-200 text-sm focus:outline-none focus:border-emerald-500"></select>
+                </div>
+
+                <!-- Cuenta Destino (Solo Transferencia) -->
+                <div id="campo-cuenta-destino" class="hidden">
+                    <label class="block text-xs text-slate-400 mb-1">Cuenta Destino</label>
+                    <select id="select-cuenta-destino" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-slate-200 text-sm focus:outline-none focus:border-emerald-500"></select>
+                </div>
+
+                <!-- Sobre Afectado (Solo Gasto) -->
+                <div id="campo-sobre">
+                    <label class="block text-xs text-slate-400 mb-1">Sobre Afectado</label>
+                    <select id="select-sobre" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-slate-200 text-sm focus:outline-none focus:border-emerald-500"></select>
+                </div>
+
+                <!-- Detalles / Nota -->
+                <div>
+                    <label class="block text-xs text-slate-400 mb-1">Detalle / Nota</label>
+                    <input type="text" id="input-nota" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-slate-200 text-sm focus:outline-none focus:border-emerald-500" placeholder="Ej: Compra supermercado">
+                </div>
+
+                <div class="pt-2">
+                    <button type="submit" class="w-full bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold py-2.5 rounded-lg text-sm transition">
+                        Confirmar Transacción
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: DETALLE DE ENTIDAD (Cuenta o Sobre) -->
+    <div id="modal-detalle" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-800 border border-slate-700 rounded-xl max-w-lg w-full p-5 space-y-4 shadow-2xl">
+            <div class="flex justify-between items-center border-b border-slate-700 pb-3">
+                <h3 id="modal-detalle-titulo" class="font-bold text-slate-100 text-lg">Detalle</h3>
+                <button onclick="cerrarModalDetalle()" class="text-slate-400 hover:text-slate-200">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+            <div id="modal-detalle-contenido" class="space-y-3">
+                <!-- Contenido inyectado dinámicamente -->
+            </div>
+        </div>
+    </div>
+
+    <!-- LÓGICA DE LA APLICACIÓN (JAVASCRIPT) -->
+    <script>
+        // Estado de la aplicación
+        let datos = JSON.parse(localStorage.getItem('finanzas_data_v2')) || {
+            cuentas: [
+                { id: '1', nombre: 'Efectivo', saldo: 25000 },
+                { id: '2', nombre: 'Mercado Pago', saldo: 85000 },
+                { id: '3', nombre: 'Banco Galicia', saldo: 140000 }
+            ],
+            sobres: [
+                { id: 's1', nombre: 'Alimentos', asignado: 120000, gastado: 45000 },
+                { id: 's2', nombre: 'Transporte', asignado: 30000, gastado: 12000 },
+                { id: 's3', nombre: 'Servicios', asignado: 50000, gastado: 48000 }
+            ],
+            movimientos: []
+        };
+
+        let tipoOperacion = 'GASTO';
+        let chartSobresInstance = null;
+        let chartComparativaInstance = null;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            lucide.createIcons();
+            document.getElementById('input-fecha').value = new Date().toISOString().split('T')[0];
+            
+            // Fechas iniciales para informes (Mes actual)
+            const hoy = new Date();
+            const primerDia = new Date(hoy.getFullYear(), hoy.getMonth(), 1).toISOString().split('T')[0];
+            document.getElementById('informe-fecha-desde').value = primerDia;
+            document.getElementById('informe-fecha-hasta').value = hoy.toISOString().split('T')[0];
+
+            actualizarTodo();
+        });
+
+        function guardarDatos() {
+            localStorage.setItem('finanzas_data_v2', JSON.stringify(datos));
+            actualizarTodo();
+        }
+
+        function actualizarTodo() {
+            renderizarCuentas();
+            renderizarSobres();
+            renderizarMovimientos();
+            actualizarResumenGlobal();
+            poblarSelects();
+        }
+
+        function cambiarVista(vista) {
+            const vDash = document.getElementById('vista-dashboard');
+            const vInf = document.getElementById('vista-informes');
+            const btnDash = document.getElementById('btn-tab-dashboard');
+            const btnInf = document.getElementById('btn-tab-informes');
+
+            if (vista === 'dashboard') {
+                vDash.classList.remove('hidden');
+                vInf.classList.add('hidden');
+                btnDash.className = 'px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-700 text-emerald-400 flex items-center';
+                btnInf.className = 'px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-slate-200 flex items-center';
+            } else {
+                vDash.classList.add('hidden');
+                vInf.classList.remove('hidden');
+                btnInf.className = 'px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-700 text-emerald-400 flex items-center';
+                btnDash.className = 'px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-slate-200 flex items-center';
+                generarInformes();
+            }
+        }
+
+        function actualizarResumenGlobal() {
+            const totalPatrimonio = datos.cuentas.reduce((acc, c) => acc + c.saldo, 0);
+            const totalGastos = datos.movimientos
+                .filter(m => m.tipo === 'GASTO')
+                .reduce((acc, m) => acc + m.monto, 0);
+            const totalIngresos = datos.movimientos
+                .filter(m => m.tipo === 'INGRESO')
+                .reduce((acc, m) => acc + m.monto, 0);
+
+            document.getElementById('total-patrimonio').innerText = `$${totalPatrimonio.toLocaleString('es-AR', {minimumFractionDigits: 2})}`;
+            document.getElementById('total-ingresos').innerText = `$${totalIngresos.toLocaleString('es-AR', {minimumFractionDigits: 2})}`;
+            document.getElementById('total-gastos').innerText = `$${totalGastos.toLocaleString('es-AR', {minimumFractionDigits: 2})}`;
+        }
+
+        function renderizarCuentas() {
+            const cont = document.getElementById('contenedor-cuentas');
+            cont.innerHTML = datos.cuentas.map(c => `
+                <div onclick="verDetalleCuenta('${c.id}')" class="bg-slate-800 border border-slate-700/80 p-3 rounded-xl cursor-pointer hover:border-emerald-500/50 transition">
+                    <span class="text-xs text-slate-400 block mb-1">${c.nombre}</span>
+                    <p class="text-lg font-bold text-slate-100">$${c.saldo.toLocaleString('es-AR', {minimumFractionDigits: 2})}</p>
+                </div>
+            `).join('');
+        }
+
+        function renderizarSobres() {
+            const cont = document.getElementById('contenedor-sobres');
+            cont.innerHTML = datos.sobres.map(s => {
+                const disponible = s.asignado - s.gastado;
+                const porcentaje = Math.min(Math.round((s.gastado / s.asignado) * 100) || 0, 100);
+                
+                let colorBarra = 'bg-emerald-500';
+                if (porcentaje > 70) colorBarra = 'bg-amber-500';
+                if (porcentaje >= 100) colorBarra = 'bg-rose-500';
+
+                return `
+                    <div onclick="verDetalleSobre('${s.id}')" class="bg-slate-800 border border-slate-700 p-4 rounded-xl space-y-2 cursor-pointer hover:border-emerald-500/50 transition">
+                        <div class="flex justify-between items-center">
+                            <span class="font-bold text-sm text-slate-200">${s.nombre}</span>
+                            <span class="text-xs text-slate-400">Restante: <b class="${disponible < 0 ? 'text-rose-400' : 'text-emerald-400'}">$${disponible.toLocaleString('es-AR')}</b></span>
+                        </div>
+                        <div class="w-full bg-slate-900 h-2 rounded-full overflow-hidden">
+                            <div class="${colorBarra} h-full transition-all duration-300" style="width: ${porcentaje}%"></div>
+                        </div>
+                        <div class="flex justify-between text-xs text-slate-400">
+                            <span>Gastado: $${s.gastado.toLocaleString('es-AR')}</span>
+                            <span>Presupuesto: $${s.asignado.toLocaleString('es-AR')}</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderizarMovimientos() {
+            const filtroTipo = document.getElementById('filtro-tipo').value;
+            const filtroCuenta = document.getElementById('filtro-cuenta').value;
+            const filtroSobre = document.getElementById('filtro-sobre').value;
+
+            let lista = datos.movimientos;
+
+            if (filtroTipo !== 'TODOS') lista = lista.filter(m => m.tipo === filtroTipo);
+            if (filtroCuenta !== 'TODAS') lista = lista.filter(m => m.cuentaId === filtroCuenta || m.cuentaDestinoId === filtroCuenta);
+            if (filtroSobre !== 'TODOS') lista = lista.filter(m => m.sobreId === filtroSobre);
+
+            const tabla = document.getElementById('tabla-movimientos');
+            if (lista.length === 0) {
+                tabla.innerHTML = `<tr><td colspan="7" class="py-4 text-center text-xs text-slate-500">No hay movimientos registrados con los filtros seleccionados</td></tr>`;
+                return;
+            }
+
+            tabla.innerHTML = lista.map(m => {
+                const cuentaOrigen = datos.cuentas.find(c => c.id === m.cuentaId)?.nombre || 'N/A';
+                const cuentaDestino = datos.cuentas.find(c => c.id === m.cuentaDestinoId)?.nombre || '';
+                const sobre = datos.sobres.find(s => s.id === m.sobreId)?.nombre || '-';
+
+                let badgeColor = 'bg-rose-500/10 text-rose-400 border-rose-500/20';
+                if (m.tipo === 'INGRESO') badgeColor = 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
+                if (m.tipo === 'TRANSFERENCIA') badgeColor = 'bg-sky-500/10 text-sky-400 border-sky-500/20';
+
+                return `
+                    <tr class="hover:bg-slate-800/50 text-xs">
+                        <td class="py-2.5 px-3 text-slate-400">${m.fecha}</td>
+                        <td class="py-2.5 px-3">
+                            <span class="px-2 py-0.5 rounded text-[10px] font-bold border ${badgeColor}">${m.tipo}</span>
+                        </td>
+                        <td class="py-2.5 px-3 font-medium text-slate-300">${cuentaOrigen}</td>
+                        <td class="py-2.5 px-3 text-slate-400">${m.tipo === 'TRANSFERENCIA' ? '➡️ ' + cuentaDestino : (m.tipo === 'GASTO' ? sobre : 'Ingreso Global')}</td>
+                        <td class="py-2.5 px-3 text-slate-400 italic">${m.nota || '-'}</td>
+                        <td class="py-2.5 px-3 text-right font-bold ${m.tipo === 'GASTO' ? 'text-rose-400' : (m.tipo === 'INGRESO' ? 'text-emerald-400' : 'text-sky-400')}">
+                            $${m.monto.toLocaleString('es-AR', {minimumFractionDigits: 2})}
+                        </td>
+                        <td class="py-2.5 px-3 text-center">
+                            <button onclick="eliminarMovimiento('${m.id}')" class="text-slate-500 hover:text-rose-400 transition" title="Eliminar">
+                                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+            lucide.createIcons();
+        }
+
+        function poblarSelects() {
+            const selectCuenta = document.getElementById('select-cuenta');
+            const selectCuentaDestino = document.getElementById('select-cuenta-destino');
+            const filtroCuenta = document.getElementById('filtro-cuenta');
+            const selectSobre = document.getElementById('select-sobre');
+            const filtroSobre = document.getElementById('filtro-sobre');
+
+            const opcionesCuentas = datos.cuentas.map(c => `<option value="${c.id}">${c.nombre} ($${c.saldo.toLocaleString('es-AR')})</option>`).join('');
+            selectCuenta.innerHTML = opcionesCuentas;
+            selectCuentaDestino.innerHTML = opcionesCuentas;
+
+            selectSobre.innerHTML = datos.sobres.map(s => `<option value="${s.id}">${s.nombre}</option>`).join('');
+
+            filtroCuenta.innerHTML = `<option value="TODAS">Todas las Cuentas</option>` + datos.cuentas.map(c => `<option value="${c.id}">${c.nombre}</option>`).join('');
+            filtroSobre.innerHTML = `<option value="TODOS">Todos los Sobres</option>` + datos.sobres.map(s => `<option value="${s.id}">${s.nombre}</option>`).join('');
+        }
+
+        function seleccionarTipo(tipo) {
+            tipoOperacion = tipo;
+            const btnGasto = document.getElementById('btn-tipo-gasto');
+            const btnIngreso = document.getElementById('btn-tipo-ingreso');
+            const btnTrans = document.getElementById('btn-tipo-transferencia');
+            const campoSobre = document.getElementById('campo-sobre');
+            const campoDestino = document.getElementById('campo-cuenta-destino');
+
+            btnGasto.className = 'py-1.5 text-xs font-semibold rounded-md text-slate-400 hover:text-slate-200';
+            btnIngreso.className = 'py-1.5 text-xs font-semibold rounded-md text-slate-400 hover:text-slate-200';
+            btnTrans.className = 'py-1.5 text-xs font-semibold rounded-md text-slate-400 hover:text-slate-200';
+
+            if (tipo === 'GASTO') {
+                btnGasto.className = 'py-1.5 text-xs font-semibold rounded-md bg-rose-500/20 text-rose-300 border border-rose-500/30';
+                campoSobre.classList.remove('hidden');
+                campoDestino.classList.add('hidden');
+            } else if (tipo === 'INGRESO') {
+                btnIngreso.className = 'py-1.5 text-xs font-semibold rounded-md bg-emerald-500/20 text-emerald-300 border border-emerald-500/30';
+                campoSobre.classList.add('hidden');
+                campoDestino.classList.add('hidden');
+            } else {
+                btnTrans.className = 'py-1.5 text-xs font-semibold rounded-md bg-sky-500/20 text-sky-300 border border-sky-500/30';
+                campoSobre.classList.add('hidden');
+                campoDestino.classList.remove('hidden');
+            }
+        }
+
+        function guardarMovimiento(e) {
+            e.preventDefault();
+            const monto = parseFloat(document.getElementById('input-monto').value);
+            const fecha = document.getElementById('input-fecha').value;
+            const cuentaId = document.getElementById('select-cuenta').value;
+            const cuentaDestinoId = document.getElementById('select-cuenta-destino').value;
+            const sobreId = document.getElementById('select-sobre').value;
+            const nota = document.getElementById('input-nota').value;
+
+            if (tipoOperacion === 'TRANSFERENCIA' && cuentaId === cuentaDestinoId) {
+                alert('La cuenta de origen y destino no pueden ser la misma.');
+                return;
+            }
+
+            const cOrigen = datos.cuentas.find(c => c.id === cuentaId);
+
+            if (tipoOperacion === 'GASTO') {
+                cOrigen.saldo -= monto;
+                const sobre = datos.sobres.find(s => s.id === sobreId);
+                if (sobre) sobre.gastado += monto;
+            } else if (tipoOperacion === 'INGRESO') {
+                cOrigen.saldo += monto;
+            } else if (tipoOperacion === 'TRANSFERENCIA') {
+                const cDestino = datos.cuentas.find(c => c.id === cuentaDestinoId);
+                cOrigen.saldo -= monto;
+                cDestino.saldo += monto;
+            }
+
+            datos.movimientos.unshift({
+                id: Date.now().toString(),
+                tipo: tipoOperacion,
+                monto,
+                fecha,
+                cuentaId,
+                cuentaDestinoId: tipoOperacion === 'TRANSFERENCIA' ? cuentaDestinoId : null,
+                sobreId: tipoOperacion === 'GASTO' ? sobreId : null,
+                nota
+            });
+
+            guardarDatos();
+            cerrarModalMovimiento();
+            document.getElementById('form-movimiento').reset();
+        }
+
+        function eliminarMovimiento(id) {
+            if (!confirm('¿Seguro que deseas eliminar este movimiento? Se revertirán los saldos.')) return;
+
+            const idx = datos.movimientos.findIndex(m => m.id === id);
+            if (idx === -1) return;
+
+            const m = datos.movimientos[idx];
+            const cOrigen = datos.cuentas.find(c => c.id === m.cuentaId);
+
+            if (m.tipo === 'GASTO') {
+                if (cOrigen) cOrigen.saldo += m.monto;
+                const sobre = datos.sobres.find(s => s.id === m.sobreId);
+                if (sobre) sobre.gastado -= m.monto;
+            } else if (m.tipo === 'INGRESO') {
+                if (cOrigen) cOrigen.saldo -= m.monto;
+            } else if (m.tipo === 'TRANSFERENCIA') {
+                const cDestino = datos.cuentas.find(c => c.id === m.cuentaDestinoId);
+                if (cOrigen) cOrigen.saldo += m.monto;
+                if (cDestino) cDestino.saldo -= m.monto;
+            }
+
+            datos.movimientos.splice(idx, 1);
+            guardarDatos();
+        }
+
+        // Modales
+        function abrirModalMovimiento() { document.getElementById('modal-movimiento').classList.remove('hidden'); }
+        function cerrarModalMovimiento() { document.getElementById('modal-movimiento').classList.add('hidden'); }
+        function cerrarModalDetalle() { document.getElementById('modal-detalle').classList.add('hidden'); }
+
+        function verDetalleCuenta(id) {
+            const cuenta = datos.cuentas.find(c => c.id === id);
+            const movs = datos.movimientos.filter(m => m.cuentaId === id || m.cuentaDestinoId === id);
+
+            document.getElementById('modal-detalle-titulo').innerText = `Cuenta: ${cuenta.nombre}`;
+            document.getElementById('modal-detalle-contenido').innerHTML = `
+                <div class="bg-slate-900 p-3 rounded-lg flex justify-between items-center mb-3">
+                    <span class="text-xs text-slate-400">Saldo Actual:</span>
+                    <span class="text-lg font-bold text-emerald-400">$${cuenta.saldo.toLocaleString('es-AR')}</span>
+                </div>
+                <h4 class="text-xs font-bold text-slate-300 uppercase tracking-wider mb-2">Historial de la Cuenta</h4>
+                <div class="max-h-60 overflow-y-auto space-y-2">
+                    ${movs.length === 0 ? '<p class="text-xs text-slate-500">Sin movimientos asociados</p>' : movs.map(m => `
+                        <div class="bg-slate-900/60 p-2 rounded text-xs flex justify-between border border-slate-700/40">
+                            <div>
+                                <span class="text-slate-300 font-semibold">${m.fecha}</span> - <span class="text-slate-400">${m.nota || m.tipo}</span>
+                            </div>
+                            <span class="${m.tipo === 'GASTO' \vert{}\vert{} (m.tipo === 'TRANSFERENCIA' && m.cuentaId === id) ? 'text-rose-400' : 'text-emerald-400'} font-bold"> $${m.monto.toLocaleString('es-AR')}
+                            </span>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+            document.getElementById('modal-detalle').classList.remove('hidden');
+        }
+
+        function verDetalleSobre(id) {
+            const sobre = datos.sobres.find(s => s.id === id);
+            const movs = datos.movimientos.filter(m => m.sobreId === id);
+
+            document.getElementById('modal-detalle-titulo').innerText = `Sobre: ${sobre.nombre}`;
+            document.getElementById('modal-detalle-contenido').innerHTML = `
+                <div class="grid grid-cols-3 gap-2 text-center bg-slate-900 p-3 rounded-lg mb-3">
+                    <div><span class="text-[10px] text-slate-400 block">Presupuesto</span><b class="text-xs text-slate-200">$${sobre.asignado.toLocaleString('es-AR')}</b></div>
+                    <div><span class="text-[10px] text-slate-400 block">Gastado</span><b class="text-xs text-rose-400">$${sobre.gastado.toLocaleString('es-AR')}</b></div>
+                    <div><span class="text-[10px] text-slate-400 block">Disponible</span><b class="text-xs text-emerald-400">$${(sobre.asignado - sobre.gastado).toLocaleString('es-AR')}</b></div>
+                </div>
+                <h4 class="text-xs font-bold text-slate-300 uppercase tracking-wider mb-2">Gastos del Sobre</h4>
+                <div class="max-h-60 overflow-y-auto space-y-2">
+                    ${movs.length === 0 ? '<p class="text-xs text-slate-500">Sin gastos cargados</p>' : movs.map(m => `
+                        <div class="bg-slate-900/60 p-2 rounded text-xs flex justify-between border border-slate-700/40">
+                            <div>
+                                <span class="text-slate-300 font-semibold">${m.fecha}</span> - <span class="text-slate-400">${m.nota \vert{}\vert{} 'Gasto'}</span> </div> <span class="text-rose-400 font-bold">-$${m.monto.toLocaleString('es-AR')}</span>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+            document.getElementById('modal-detalle').classList.remove('hidden');
+        }
+
+        // Generar Gráficos de Informes
+        function generarInformes() {
+            const fDesde = document.getElementById('informe-fecha-desde').value;
+            const fHasta = document.getElementById('informe-fecha-hasta').value;
+
+            const movsFiltrados = datos.movimientos.filter(m => m.fecha >= fDesde && m.fecha <= fHasta);
+
+            // 1. Gráfico Sobres
+            const gastosPorSobre = {};
+            datos.sobres.forEach(s => gastosPorSobre[s.nombre] = 0);
+            movsFiltrados.filter(m => m.tipo === 'GASTO').forEach(m => {
+                const s = datos.sobres.find(sob => sob.id === m.sobreId);
+                if (s) gastosPorSobre[s.nombre] = (gastosPorSobre[s.nombre] || 0) + m.monto;
+            });
+
+            if (chartSobresInstance) chartSobresInstance.destroy();
+            const ctxSobres = document.getElementById('chart-sobres').getContext('2d');
+            chartSobresInstance = new Chart(ctxSobres, {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(gastosPorSobre),
+                    datasets: [{
+                        data: Object.values(gastosPorSobre),
+                        backgroundColor: ['#10b981', '#f59e0b', '#ef4444', '#06b6d4', '#8b5cf6', '#ec4899']
+                    }]
+                },
+                options: { plugins: { legend: { labels: { color: '#94a3b8' } } } }
+            });
+
+            // 2. Gráfico Comparativo
+            const totIngresos = movsFiltrados.filter(m => m.tipo === 'INGRESO').reduce((a, b) => a + b.monto, 0);
+            const totGastos = movsFiltrados.filter(m => m.tipo === 'GASTO').reduce((a, b) => a + b.monto, 0);
+
+            if (chartComparativaInstance) chartComparativaInstance.destroy();
+            const ctxComp = document.getElementById('chart-comparativa').getContext('2d');
+            chartComparativaInstance = new Chart(ctxComp, {
+                type: 'bar',
+                data: {
+                    labels: ['Ingresos', 'Gastos'],
+                    datasets: [{
+                        data: [totIngresos, totGastos],
+                        backgroundColor: ['#10b981', '#ef4444']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { ticks: { color: '#94a3b8' } },
+                        y: { ticks: { color: '#94a3b8' } }
+                    }
+                }
+            });
+        }
+
+        function exportarCSV() {
+            let csv = 'Fecha,Tipo,Cuenta Origen,Sobre/Destino,Nota,Monto\n';
+            datos.movimientos.forEach(m => {
+                const cOrigen = datos.cuentas.find(c => c.id === m.cuentaId)?.nombre || '';
+                const cDestino = datos.cuentas.find(c => c.id === m.cuentaDestinoId)?.nombre || '';
+                const sobre = datos.sobres.find(s => s.id === m.sobreId)?.nombre || '';
+                const destino = m.tipo === 'TRANSFERENCIA' ? cDestino : sobre;
+
+                csv += `"${m.fecha}","${m.tipo}","${cOrigen}","${destino}","${m.nota || ''}",${m.monto}\n`;
+            });
+
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.setAttribute('href', url);
+            a.setAttribute('download', `reporte_finanzas_${new Date().toISOString().split('T')[0]}.csv`);
+            a.click();
+        }
+
+        function agregarCuenta() {
+            const nombre = prompt('Nombre de la cuenta:');
+            if (nombre) {
+                datos.cuentas.push({ id: Date.now().toString(), nombre, saldo: 0 });
+                guardarDatos();
+            }
+        }
+
+        function agregarSobre() {
+            const nombre = prompt('Nombre del Sobre:');
+            const asignado = parseFloat(prompt('Presupuesto Mensual ($):') || '0');
+            if (nombre) {
+                datos.sobres.push({ id: Date.now().toString(), nombre, asignado, gastado: 0 });
+                guardarDatos();
+            }
+        }
+    </script>
+</body>
+</html>
